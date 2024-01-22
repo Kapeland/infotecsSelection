@@ -1,8 +1,8 @@
 package main
 
 import (
-	hndl "../httpServer/internal/handlers"
 	"fmt"
+	hndl "infotecsSelection/cmd/httpServer/internal/handlers"
 	"log"
 	"net/http"
 	"os"
