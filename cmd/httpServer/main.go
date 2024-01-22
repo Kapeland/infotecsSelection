@@ -1,19 +1,19 @@
 package main
 
 import (
+	hndl "../httpServer/internal/handlers"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 )
 
+var apiPath = "/api/v1/wallet"
+
 func main() {
-	http.HandleFunc("/", indexHandler)
-	h2 := func(w http.ResponseWriter, _ *http.Request) {
-		io.WriteString(w, "Hello from a HandleFunc #2!\n")
-	}
-	http.HandleFunc("/endpoint", h2)
+	http.HandleFunc(apiPath, hndl.CreateWalletHandler)
+	http.HandleFunc(apiPath+"/", hndl.WalletInfoHandler)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -23,15 +23,4 @@ func main() {
 	log.Printf("Listening on port %s", port)
 	log.Printf("Open http://localhost:%s in the browser", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
-}
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-	_, err := fmt.Fprint(w, "Hello, World!")
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
 }
