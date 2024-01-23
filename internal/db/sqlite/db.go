@@ -48,11 +48,20 @@ func PrintDB(db *sql.DB) {
 	}
 }
 
-func AddWallet(userUUID string, balance float64, db *sql.DB) {
+func AddWallet(walletUUID string, balance float64, db *sql.DB) {
 	_, err := db.Exec("insert into wallets (id, balance) values ($1, $2)",
-		userUUID, balance)
+		walletUUID, balance)
 	if err != nil {
 		panic(err)
 	}
 
+}
+
+func FindWallet(walletUUID string, db *sql.DB) (float64, error) {
+	row := db.QueryRow("select * from wallets where id = $1", walletUUID)
+	wlt := wallet{}
+	if err := row.Scan(&wlt.id, &wlt.balance); err != nil {
+		return 0.0, err
+	}
+	return wlt.balance, nil
 }
