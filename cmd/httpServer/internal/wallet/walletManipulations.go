@@ -9,6 +9,11 @@ type Wallet struct {
 	Balance float64 `json:"balance"`
 }
 
+type WltForSend struct {
+	To     string  `json:"to"`
+	Amount float64 `json:"amount"`
+}
+
 func CreateWallet(walletID string) Wallet {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
@@ -25,4 +30,14 @@ func CheckWallet(walletID string) (Wallet, error) {
 		return Wallet{}, err
 	}
 	return Wallet{walletID, balance}, nil
+}
+
+func UpdateWallet(wlt Wallet) error {
+	db := myDB.LaunchDB()
+	defer myDB.CloseDB(db)
+	err := myDB.UpdateWalletDB(wlt.Id, wlt.Balance, db)
+	if err != nil {
+		return err
+	}
+	return nil
 }
