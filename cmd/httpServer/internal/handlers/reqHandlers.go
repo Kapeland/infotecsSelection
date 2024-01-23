@@ -36,7 +36,8 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	if len(recvURL) == 4 { // Только информация о кошельке
+	// Только информация о кошельке
+	if len(recvURL) == 4 {
 		switch r.Method {
 		case "GET":
 			wltID := recvURL[len(recvURL)-1]
@@ -62,6 +63,115 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 			}
 
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}
+
+	//history and send
+	if len(recvURL) == 5 {
+		switch r.Method {
+		case "GET": //TODO finish it
+			if recvURL[len(recvURL)-1] != "history" {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println("GET request but not /history endpoint.")
+				break
+			}
+			wltID_from := recvURL[len(recvURL)-2]
+			if err := myUUID.CheckUUID(wltID_from); err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println(err)
+				break
+			}
+			// Сейчас можно попытаться получить исходящий кошелёк
+			tmpWlt, err := wlt.CheckWallet(wltID_from)
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println(err)
+				break
+			}
+
+			jsonData, err := json.Marshal(tmpWlt)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.Write(jsonData)
+
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound) //TODO maybe StatusInternalError?
+				log.Fatal(err)
+
+			}
+		case "POST":
+			if recvURL[len(recvURL)-1] != "send" {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println("POST request but not /send endpoint.")
+				break
+			}
+			outgoingWltID := recvURL[len(recvURL)-2]
+			if err := myUUID.CheckUUID(outgoingWltID); err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println(err)
+				break
+			}
+			// Сейчас можно попытаться получить исходящий кошелёк
+			outgoingWlt, err := wlt.CheckWallet(outgoingWltID)
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println(err)
+				break
+			}
+			incomingWlt := wlt.WltForSend{}
+
+			if r.Body == nil {
+				w.WriteHeader(http.StatusBadRequest) //TODO maybe StatusInternalError?
+				log.Println("There is no body")
+				break
+			}
+
+			err = json.NewDecoder(r.Body).Decode(&incomingWlt)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest) //TODO maybe StatusInternalError?
+				log.Println(err)
+				break
+			}
+
+			if err := myUUID.CheckUUID(incomingWlt.To); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				log.Println(err)
+				break
+			}
+
+			incomingWltFromDB, err := wlt.CheckWallet(incomingWlt.To)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				log.Println("Not found wallet which recievs money.", err)
+				break
+			}
+
+			//Сейчас попытаемся совершить операцию
+
+			//Тут возможны проблемы из-за потери точности
+			if outgoingWlt.Balance < incomingWlt.Amount {
+				w.WriteHeader(http.StatusBadRequest)
+				log.Println("Not enough money.")
+				break
+			}
+
+			incomingWltFromDB.Balance += incomingWlt.Amount
+
+			if err := wlt.UpdateWallet(incomingWltFromDB); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				break
+			}
+
+			outgoingWlt.Balance -= incomingWlt.Amount
+
+			if err := wlt.UpdateWallet(outgoingWlt); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				break
+			}
+			w.WriteHeader(http.StatusOK)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
