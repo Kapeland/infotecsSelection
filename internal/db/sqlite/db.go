@@ -65,3 +65,11 @@ func FindWallet(walletUUID string, db *sql.DB) (float64, error) {
 	}
 	return wlt.balance, nil
 }
+
+func UpdateWalletDB(walletUUID string, balance float64, db *sql.DB) error {
+	_, err := db.Exec("update wallets set balance = $1 where id = $2", balance, walletUUID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
