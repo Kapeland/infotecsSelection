@@ -9,9 +9,20 @@ type Wallet struct {
 	Balance float64 `json:"balance"`
 }
 
-func CreateWallet(userUUID string) Wallet {
+func CreateWallet(walletID string) Wallet {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
-	myDB.AddWallet(userUUID, initBalance, db)
-	return Wallet{userUUID, initBalance}
+	myDB.AddWallet(walletID, initBalance, db)
+	return Wallet{walletID, initBalance}
+}
+
+// If error returns empty wallet
+func CheckWallet(walletID string) (Wallet, error) {
+	db := myDB.LaunchDB()
+	defer myDB.CloseDB(db)
+	balance, err := myDB.FindWallet(walletID, db)
+	if err != nil {
+		return Wallet{}, err
+	}
+	return Wallet{walletID, balance}, nil
 }
