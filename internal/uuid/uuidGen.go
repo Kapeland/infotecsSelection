@@ -5,7 +5,7 @@ import (
 	guuid "github.com/google/uuid"
 )
 
-func GetUUID() string {
+func CreateUUID() string {
 	id := guuid.New()
 	return fmt.Sprintf("%s", id.String())
 }
