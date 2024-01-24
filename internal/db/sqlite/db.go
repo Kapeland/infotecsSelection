@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"time"
 )
 
 const dbPath = "././identifier.sqlite"
@@ -68,6 +69,15 @@ func FindWallet(walletUUID string, db *sql.DB) (float64, error) {
 
 func UpdateWalletDB(walletUUID string, balance float64, db *sql.DB) error {
 	_, err := db.Exec("update wallets set balance = $1 where id = $2", balance, walletUUID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func FillOperationLog(fromUUID, toUUID string, amount float64, db *sql.DB) error {
+	_, err := db.Exec("insert into op_log (fromID, toID, amount, time) values ($1, $2, $3, $4)",
+		fromUUID, toUUID, amount, time.Now().Format(time.RFC3339))
 	if err != nil {
 		return err
 	}
