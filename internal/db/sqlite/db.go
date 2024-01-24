@@ -11,11 +11,6 @@ import (
 
 const dbPath = "././identifier.sqlite"
 
-type wallet struct {
-	id      string
-	balance float64
-}
-
 func LaunchDB() *sql.DB {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -35,11 +30,11 @@ func PrintDB(db *sql.DB) {
 	}
 	defer rows.Close()
 
-	wallets := []wallet{}
+	wallets := []tp.Wallet{}
 
 	for rows.Next() {
-		tmpWallet := wallet{}
-		err = rows.Scan(&tmpWallet.id, &tmpWallet.balance)
+		tmpWallet := tp.Wallet{}
+		err = rows.Scan(&tmpWallet.Id, &tmpWallet.Balance)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -47,7 +42,7 @@ func PrintDB(db *sql.DB) {
 		wallets = append(wallets, tmpWallet)
 	}
 	for _, w := range wallets {
-		fmt.Println(w.id, w.balance)
+		fmt.Println(w.Id, w.Balance)
 	}
 }
 
@@ -62,11 +57,11 @@ func AddWallet(walletUUID string, balance float64, db *sql.DB) {
 
 func FindWallet(walletUUID string, db *sql.DB) (float64, error) {
 	row := db.QueryRow("select * from wallets where id = $1", walletUUID)
-	wlt := wallet{}
-	if err := row.Scan(&wlt.id, &wlt.balance); err != nil {
+	wlt := tp.Wallet{}
+	if err := row.Scan(&wlt.Id, &wlt.Balance); err != nil {
 		return 0.0, err
 	}
-	return wlt.balance, nil
+	return wlt.Balance, nil
 }
 
 func UpdateWalletDB(walletUUID string, balance float64, db *sql.DB) error {
