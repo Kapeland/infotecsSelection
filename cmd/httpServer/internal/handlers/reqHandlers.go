@@ -171,6 +171,11 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				break
 			}
+			if err := wlt.RegisterOperation(outgoingWlt.Id, incomingWltFromDB.Id, incomingWlt.Amount); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				break
+			}
 			w.WriteHeader(http.StatusOK)
 		default:
 			w.WriteHeader(http.StatusNotFound)
