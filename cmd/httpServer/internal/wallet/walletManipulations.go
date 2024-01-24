@@ -2,40 +2,30 @@ package wallet
 
 import (
 	myDB "infotecsSelection/internal/db/sqlite"
-	"infotecsSelection/internal/types"
+	tp "infotecsSelection/internal/types"
 )
 
 const initBalance float64 = 100.0
 
-type Wallet struct {
-	Id      string  `json:"id"`
-	Balance float64 `json:"balance"`
-}
-
-type WltForSend struct {
-	To     string  `json:"to"`
-	Amount float64 `json:"amount"`
-}
-
-func CreateWallet(walletID string) Wallet {
+func CreateWallet(walletID string) tp.Wallet {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
 	myDB.AddWallet(walletID, initBalance, db)
-	return Wallet{walletID, initBalance}
+	return tp.Wallet{walletID, initBalance}
 }
 
 // If error returns empty wallet
-func CheckWallet(walletID string) (Wallet, error) {
+func CheckWallet(walletID string) (tp.Wallet, error) {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
 	balance, err := myDB.FindWallet(walletID, db)
 	if err != nil {
-		return Wallet{}, err
+		return tp.Wallet{}, err
 	}
-	return Wallet{walletID, balance}, nil
+	return tp.Wallet{walletID, balance}, nil
 }
 
-func UpdateWallet(wlt Wallet) error {
+func UpdateWallet(wlt tp.Wallet) error {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
 	err := myDB.UpdateWalletDB(wlt.Id, wlt.Balance, db)
@@ -55,7 +45,7 @@ func RegisterOperation(fromUUID, toUUID string, amount float64) error {
 	return nil
 }
 
-func GetOutgoingOp(fromUUID string) ([]types.Operation, error) {
+func GetOutgoingOp(fromUUID string) ([]tp.Operation, error) {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
 
@@ -63,7 +53,7 @@ func GetOutgoingOp(fromUUID string) ([]types.Operation, error) {
 
 }
 
-func GetIncomingOp(toUUID string) ([]types.Operation, error) {
+func GetIncomingOp(toUUID string) ([]tp.Operation, error) {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
 

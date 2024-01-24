@@ -3,14 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	wlt "infotecsSelection/cmd/httpServer/internal/wallet"
+	tp "infotecsSelection/internal/types"
 	myURL "infotecsSelection/internal/url"
 	myUUID "infotecsSelection/internal/uuid"
 	"log"
 	"net/http"
 )
 
-const headerKey = "Content-Type"
-const headerVal = "application/json; charset=utf-8"
+const (
+	headerKey = "Content-Type"
+	headerVal = "application/json; charset=utf-8"
+)
 
 func CreateWalletHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -137,7 +140,7 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				break
 			}
-			incomingWlt := wlt.WltForSend{}
+			incomingWlt := tp.WltForSend{}
 
 			if r.Body == nil {
 				w.WriteHeader(http.StatusBadRequest) //TODO maybe StatusInternalError?

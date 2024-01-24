@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const dbPath = "././identifier.sqlite?parseTime=true"
+const dbPath = "././identifier.sqlite"
 
 type wallet struct {
 	id      string
