@@ -1,6 +1,9 @@
 package wallet
 
-import myDB "infotecsSelection/internal/db/sqlite"
+import (
+	myDB "infotecsSelection/internal/db/sqlite"
+	"infotecsSelection/internal/types"
+)
 
 const initBalance float64 = 100.0
 
@@ -50,4 +53,12 @@ func RegisterOperation(fromUUID, toUUID string, amount float64) error {
 		return err
 	}
 	return nil
+}
+
+func GetOutgoingOp(fromUUID string) ([]types.Operation, error) {
+	db := myDB.LaunchDB()
+	defer myDB.CloseDB(db)
+
+	return myDB.FindOutgoindOp(fromUUID, db)
+
 }
