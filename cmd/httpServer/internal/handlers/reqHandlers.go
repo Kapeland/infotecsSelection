@@ -102,7 +102,14 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				break
 			}
-			jsonData, err := json.Marshal(outgoinOp)
+			incomingOp, err := wlt.GetIncomingOp(reqWltID)
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println(err)
+				break
+			}
+
+			jsonData, err := json.Marshal(append(outgoinOp, incomingOp...))
 			w.Header().Set(headerKey, headerVal)
 			w.Write(jsonData)
 
