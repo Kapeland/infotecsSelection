@@ -62,3 +62,11 @@ func GetOutgoingOp(fromUUID string) ([]types.Operation, error) {
 	return myDB.FindOutgoindOp(fromUUID, db)
 
 }
+
+func GetIncomingOp(toUUID string) ([]types.Operation, error) {
+	db := myDB.LaunchDB()
+	defer myDB.CloseDB(db)
+
+	return myDB.FindIncomingOp(toUUID, db)
+
+}
