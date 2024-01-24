@@ -106,3 +106,24 @@ func FindOutgoindOp(fromUUID string, db *sql.DB) ([]tp.Operation, error) {
 	}
 	return operations, nil
 }
+
+func FindIncomingOp(toUUID string, db *sql.DB) ([]tp.Operation, error) {
+	rows, err := db.Query("select * from op_log where op_log.toID = $1", toUUID)
+	if err != nil {
+		return []tp.Operation{}, err
+	}
+	defer rows.Close()
+	operations := []tp.Operation{}
+	tmpStrTime := ""
+	for rows.Next() {
+		op := tp.Operation{}
+		err := rows.Scan(&op.From, &op.To, &op.Amount, &tmpStrTime)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		op.Time, _ = time.Parse(time.RFC3339, tmpStrTime)
+		operations = append(operations, op)
+	}
+	return operations, nil
+}
