@@ -9,12 +9,15 @@ import (
 	"net/http"
 )
 
+const headerKey = "Content-Type"
+const headerVal = "application/json; charset=utf-8"
+
 func CreateWalletHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		tmpWlt := wlt.CreateWallet(myUUID.CreateUUID())
 		jsonData, err := json.Marshal(tmpWlt)
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set(headerKey, headerVal)
 		w.Write(jsonData)
 
 		if err != nil {
@@ -54,7 +57,7 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			jsonData, err := json.Marshal(tmpWlt)
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.Header().Set(headerKey, headerVal)
 			w.Write(jsonData)
 
 			if err != nil {
@@ -71,34 +74,42 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 	//history and send
 	if len(recvURL) == 5 {
 		switch r.Method {
-		case "GET": //TODO finish it
+		case "GET":
 			if recvURL[len(recvURL)-1] != "history" {
 				w.WriteHeader(http.StatusNotFound)
 				log.Println("GET request but not /history endpoint.")
 				break
 			}
-			wltID_from := recvURL[len(recvURL)-2]
-			if err := myUUID.CheckUUID(wltID_from); err != nil {
+			reqWltID := recvURL[len(recvURL)-2]
+			if err := myUUID.CheckUUID(reqWltID); err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				log.Println(err)
 				break
 			}
-			// Сейчас можно попытаться получить исходящий кошелёк
-			tmpWlt, err := wlt.CheckWallet(wltID_from)
+			// Сейчас можно попытаться получить запрашиваемый кошелёк
+			_, err := wlt.CheckWallet(reqWltID)
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				log.Println(err)
 				break
 			}
 
-			jsonData, err := json.Marshal(tmpWlt)
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			// Теперь пытаемся получить историю операций
+
+			outgoinOp, err := wlt.GetOutgoingOp(reqWltID)
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				log.Println(err)
+				break
+			}
+			jsonData, err := json.Marshal(outgoinOp)
+			w.Header().Set(headerKey, headerVal)
 			w.Write(jsonData)
 
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound) //TODO maybe StatusInternalError?
-				log.Fatal(err)
-
+				log.Println(err)
+				break
 			}
 		case "POST":
 			if recvURL[len(recvURL)-1] != "send" {
