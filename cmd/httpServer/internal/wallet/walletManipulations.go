@@ -41,3 +41,13 @@ func UpdateWallet(wlt Wallet) error {
 	}
 	return nil
 }
+
+func RegisterOperation(fromUUID, toUUID string, amount float64) error {
+	db := myDB.LaunchDB()
+	defer myDB.CloseDB(db)
+	err := myDB.FillOperationLog(fromUUID, toUUID, amount, db)
+	if err != nil {
+		return err
+	}
+	return nil
+}
