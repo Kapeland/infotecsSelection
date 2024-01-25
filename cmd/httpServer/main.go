@@ -8,9 +8,11 @@ import (
 	"os"
 )
 
-var apiPath = "/api/v1/wallet"
+const apiPath = "/api/v1/wallet"
 
 func main() {
+	//Wallet package initializes DB!
+
 	http.HandleFunc(apiPath, hndl.CreateWalletHandler)
 	http.HandleFunc(apiPath+"/", hndl.WalletInfoAndOpHandler)
 
