@@ -184,6 +184,12 @@ func WalletInfoAndOpHandler(w http.ResponseWriter, r *http.Request) {
 
 			//Сейчас попытаемся совершить операцию
 
+			if incomingWlt.Amount < 0.0 {
+				w.WriteHeader(http.StatusBadRequest)
+				log.Println("Negative amount.")
+				break
+			}
+
 			//Тут возможны проблемы из-за потери точности
 			if outgoingWlt.Balance < incomingWlt.Amount {
 				w.WriteHeader(http.StatusBadRequest)
