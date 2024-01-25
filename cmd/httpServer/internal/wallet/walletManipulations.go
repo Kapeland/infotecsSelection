@@ -45,18 +45,10 @@ func RegisterOperation(fromUUID, toUUID string, amount float64) error {
 	return nil
 }
 
-func GetOutgoingOp(fromUUID string) ([]tp.Operation, error) {
+func GetInAndOutOp(UUID string) ([]tp.Operation, error) {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)
 
-	return myDB.FindOutgoindOp(fromUUID, db)
-
-}
-
-func GetIncomingOp(toUUID string) ([]tp.Operation, error) {
-	db := myDB.LaunchDB()
-	defer myDB.CloseDB(db)
-
-	return myDB.FindIncomingOp(toUUID, db)
+	return myDB.FindInAndOutOp(UUID, db)
 
 }

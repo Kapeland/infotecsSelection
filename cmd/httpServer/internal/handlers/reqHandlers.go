@@ -99,20 +99,14 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 			// Теперь пытаемся получить историю операций
 
-			outgoinOp, err := wlt.GetOutgoingOp(reqWltID)
-			if err != nil {
-				w.WriteHeader(http.StatusNotFound)
-				log.Println(err)
-				break
-			}
-			incomingOp, err := wlt.GetIncomingOp(reqWltID)
+			historyOfOp, err := wlt.GetInAndOutOp(reqWltID)
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				log.Println(err)
 				break
 			}
 
-			jsonData, err := json.Marshal(append(outgoinOp, incomingOp...))
+			jsonData, err := json.Marshal(historyOfOp)
 			w.Header().Set(headerKey, headerVal)
 			w.Write(jsonData)
 
