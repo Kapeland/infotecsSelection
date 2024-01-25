@@ -20,18 +20,25 @@ func CreateWalletHandler(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		tmpWlt := wlt.CreateWallet(myUUID.CreateUUID())
 		jsonData, err := json.Marshal(tmpWlt)
-		w.Header().Set(headerKey, headerVal)
-		w.Write(jsonData)
 
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest) //TODO maybe StatusInternalError?
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
 		}
+
+		w.Header().Set(headerKey, headerVal)
+		_, err = w.Write(jsonData)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+		}
+
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 	}
 }
-func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
+func WalletInfoAndOpHandler(w http.ResponseWriter, r *http.Request) {
 	recvURL := myURL.ParseURL(r.URL)
 
 	if recvURL[0] != "" { // Значит что-то есть после домена и перед API, что не правильно
@@ -60,17 +67,24 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			jsonData, err := json.Marshal(tmpWlt)
-			w.Header().Set(headerKey, headerVal)
-			w.Write(jsonData)
 
 			if err != nil {
-				w.WriteHeader(http.StatusNotFound) //TODO maybe StatusInternalError?
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Fatal(err)
+
+			}
+
+			w.Header().Set(headerKey, headerVal)
+			_, err = w.Write(jsonData)
+
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
 				log.Fatal(err)
 
 			}
 
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusBadRequest)
 		}
 	}
 
@@ -79,7 +93,7 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			if recvURL[len(recvURL)-1] != "history" {
-				w.WriteHeader(http.StatusNotFound)
+				w.WriteHeader(http.StatusBadRequest)
 				log.Println("GET request but not /history endpoint.")
 				break
 			}
@@ -107,17 +121,23 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			jsonData, err := json.Marshal(historyOfOp)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				break
+			}
+
 			w.Header().Set(headerKey, headerVal)
-			w.Write(jsonData)
+			_, err = w.Write(jsonData)
 
 			if err != nil {
-				w.WriteHeader(http.StatusNotFound) //TODO maybe StatusInternalError?
+				w.WriteHeader(http.StatusInternalServerError)
 				log.Println(err)
 				break
 			}
 		case "POST":
 			if recvURL[len(recvURL)-1] != "send" {
-				w.WriteHeader(http.StatusNotFound)
+				w.WriteHeader(http.StatusBadRequest)
 				log.Println("POST request but not /send endpoint.")
 				break
 			}
@@ -137,27 +157,27 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 			incomingWlt := tp.WltForSend{}
 
 			if r.Body == nil {
-				w.WriteHeader(http.StatusBadRequest) //TODO maybe StatusInternalError?
-				log.Println("There is no body")
+				w.WriteHeader(http.StatusBadRequest)
+				log.Println("There is no body in request")
 				break
 			}
 
 			err = json.NewDecoder(r.Body).Decode(&incomingWlt)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest) //TODO maybe StatusInternalError?
+				w.WriteHeader(http.StatusBadRequest)
 				log.Println(err)
 				break
 			}
 
 			if err := myUUID.CheckUUID(incomingWlt.To); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
+				w.WriteHeader(http.StatusNotFound)
 				log.Println(err)
 				break
 			}
 
 			incomingWltFromDB, err := wlt.CheckWallet(incomingWlt.To)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
+				w.WriteHeader(http.StatusNotFound)
 				log.Println("Not found wallet which recievs money.", err)
 				break
 			}
@@ -167,7 +187,7 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 			//Тут возможны проблемы из-за потери точности
 			if outgoingWlt.Balance < incomingWlt.Amount {
 				w.WriteHeader(http.StatusBadRequest)
-				log.Println("Not enough money.")
+				log.Println("Not enough money in wallet.")
 				break
 			}
 
@@ -191,9 +211,8 @@ func WalletInfoHandler(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				break
 			}
-			w.WriteHeader(http.StatusOK)
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusBadRequest)
 		}
 	}
 

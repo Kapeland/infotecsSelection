@@ -14,7 +14,8 @@ func CreateWallet(walletID string) tp.Wallet {
 	return tp.Wallet{walletID, initBalance}
 }
 
-// If error returns empty wallet
+// If error returns empty wallet.
+// If Error then should be ErrNoRows
 func CheckWallet(walletID string) (tp.Wallet, error) {
 	db := myDB.LaunchDB()
 	defer myDB.CloseDB(db)

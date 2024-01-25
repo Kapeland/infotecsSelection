@@ -12,7 +12,7 @@ var apiPath = "/api/v1/wallet"
 
 func main() {
 	http.HandleFunc(apiPath, hndl.CreateWalletHandler)
-	http.HandleFunc(apiPath+"/", hndl.WalletInfoHandler)
+	http.HandleFunc(apiPath+"/", hndl.WalletInfoAndOpHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
