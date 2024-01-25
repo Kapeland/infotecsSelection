@@ -18,7 +18,11 @@ const (
 func CreateWalletHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		tmpWlt := wlt.CreateWallet(myUUID.CreateUUID())
+		tmpWlt, err := wlt.CreateWallet(myUUID.CreateUUID())
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+		}
 		jsonData, err := json.Marshal(tmpWlt)
 
 		if err != nil {

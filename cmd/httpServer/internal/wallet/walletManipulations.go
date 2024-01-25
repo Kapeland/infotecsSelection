@@ -23,9 +23,9 @@ func init() {
 	}
 }
 
-func CreateWallet(walletID string) tp.Wallet {
-	myDB.AddWallet(walletID, initBalance, db)
-	return tp.Wallet{walletID, initBalance}
+func CreateWallet(walletID string) (tp.Wallet, error) {
+	err := myDB.AddWallet(walletID, initBalance, db)
+	return tp.Wallet{walletID, initBalance}, err
 }
 
 // If error returns empty wallet.
