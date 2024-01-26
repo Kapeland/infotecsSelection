@@ -41,10 +41,18 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 func (s *server) configureRouter() {
 	wltS := s.router.PathPrefix(wltApiPath).Subrouter()
-	wltS.HandleFunc("", s.createWalletHandler()).Methods("POST")
-	wltS.HandleFunc("/{walletId}", s.WalletInfoHandler()).Methods("GET")
-	wltS.HandleFunc("/{walletId}/history", s.WalletHistoryHandler()).Methods("GET")
-	wltS.HandleFunc("/{walletId}/send", s.WalletSendHandler()).Methods("POST")
+
+	wltS.HandleFunc("", s.createWalletHandler()).Methods("POST") //Correct
+	//wltS.Handle("", wltS.MethodNotAllowedHandler).Methods("GET")
+	wltS.HandleFunc("/{walletId}", s.WalletInfoHandler()).Methods("GET") //Correct
+	//wltS.Handle("/{walletId}", wltS.MethodNotAllowedHandler).Methods("POST")
+
+	wltS.HandleFunc("/{walletId}/history", s.WalletHistoryHandler()).Methods("GET") //Correct
+	//wltS.Handle("/{walletId}/history", wltS.MethodNotAllowedHandler).Methods("POST")
+
+	wltS.HandleFunc("/{walletId}/send", s.WalletSendHandler()).Methods("POST") //Correct
+	//wltS.Handle("/{walletId}/send", wltS.MethodNotAllowedHandler).Methods("GET")
+
 }
 
 func (s *server) createWalletHandler() http.HandlerFunc {
@@ -55,6 +63,7 @@ func (s *server) createWalletHandler() http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
 
 		tmpWlt := tp.Wallet{genUUID, initBalance}
@@ -64,6 +73,7 @@ func (s *server) createWalletHandler() http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
 
 		w.Header().Set(headerKey, headerVal)
@@ -72,8 +82,8 @@ func (s *server) createWalletHandler() http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
-
 	})
 }
 
@@ -84,18 +94,23 @@ func (s *server) WalletInfoHandler() http.HandlerFunc {
 		if err := myUUID.CheckUUID(wltID); err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
 		}
 		// Сейчас можно попытаться получить указанный кошелёк
 		tmpWlt, err := s.db.Wallet().FindWallet(wltID)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
+
 		}
 		jsonData, err := json.Marshal(tmpWlt)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
+
 		}
 
 		w.Header().Set(headerKey, headerVal)
@@ -104,6 +119,8 @@ func (s *server) WalletInfoHandler() http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
+
 		}
 	})
 }
@@ -116,12 +133,14 @@ func (s *server) WalletHistoryHandler() http.HandlerFunc {
 		if err := myUUID.CheckUUID(reqWltID); err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
 		}
 		// Сейчас можно попытаться получить запрашиваемый кошелёк
 		_, err := s.db.Wallet().FindWallet(reqWltID)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
 		}
 
 		// Теперь пытаемся получить историю операций
@@ -130,12 +149,14 @@ func (s *server) WalletHistoryHandler() http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
 		}
 
 		jsonData, err := json.Marshal(historyOfOp)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
 
 		w.Header().Set(headerKey, headerVal)
@@ -144,6 +165,7 @@ func (s *server) WalletHistoryHandler() http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
 	})
 }
@@ -156,35 +178,41 @@ func (s *server) WalletSendHandler() http.HandlerFunc {
 		if err := myUUID.CheckUUID(outgoingWltID); err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
 		}
 		// Сейчас можно попытаться получить исходящий кошелёк
 		outgoingWlt, err := s.db.Wallet().FindWallet(outgoingWltID)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
 		}
-		incomingWlt := tp.WltForSend{}
 
 		if r.Body == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Println("There is no body in request")
 		}
 
+		incomingWlt := tp.WltForSend{}
+
 		err = json.NewDecoder(r.Body).Decode(&incomingWlt)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Println(err)
+			return
 		}
 
 		if err := myUUID.CheckUUID(incomingWlt.To); err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println(err)
+			return
 		}
 
 		incomingWltFromDB, err := s.db.Wallet().FindWallet(incomingWlt.To)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			log.Println("Not found wallet which recievs money.", err)
+			return
 		}
 
 		//Сейчас попытаемся совершить операцию
@@ -192,12 +220,14 @@ func (s *server) WalletSendHandler() http.HandlerFunc {
 		if incomingWlt.Amount < 0.0 {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Println("Negative amount.")
+			return
 		}
 
 		//Тут возможны проблемы из-за потери точности
 		if outgoingWlt.Balance < incomingWlt.Amount {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Println("Not enough money in wallet.")
+			return
 		}
 
 		incomingWltFromDB.Balance += incomingWlt.Amount
@@ -205,6 +235,7 @@ func (s *server) WalletSendHandler() http.HandlerFunc {
 		if err := s.db.Wallet().UpdateWallet(incomingWltFromDB.Id, incomingWltFromDB.Balance); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
 
 		outgoingWlt.Balance -= incomingWlt.Amount
@@ -212,10 +243,12 @@ func (s *server) WalletSendHandler() http.HandlerFunc {
 		if err := s.db.Wallet().UpdateWallet(outgoingWlt.Id, outgoingWlt.Balance); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
 		if err := s.db.Wallet().FillOperationLog(outgoingWlt.Id, incomingWltFromDB.Id, incomingWlt.Amount); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
+			return
 		}
 	})
 }

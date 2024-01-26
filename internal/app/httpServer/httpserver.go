@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"infotecsSelection/internal/app/db/sqlite"
+	"log"
 	"net/http"
 )
-
-const path = "././identifier.sqlite"
 
 // Start ...
 func Start(config *Config) error {
@@ -17,9 +16,13 @@ func Start(config *Config) error {
 	}
 
 	defer db.Close()
-	store := sqlite.New(db)
-	srv := newServer(store)
+	store, err := sqlite.New(db)
+	if err != nil {
+		return err
+	}
 
+	srv := newServer(store)
+	log.Printf("Listening on port%s", config.BindAddr)
 	return http.ListenAndServe(config.BindAddr, srv)
 }
 
